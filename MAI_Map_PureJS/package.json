@@ -1,17 +1,14 @@
 {
-  "name": "mai-map",
+  "name": "mai-map-purejs",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "@types/three": "^0.170.0",
-    "typescript": "~5.6.2",
     "vite": "^6.0.1"
   },
   "dependencies": {
