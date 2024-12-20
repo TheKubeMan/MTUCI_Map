@@ -168,7 +168,7 @@ const textField = document.getElementById("input");
 router.addEventListener("click", (event) => {
   let inc = false;
   for (let i = 0; i < cabinets.length; i++)
-    if (cabinets[i].name.includes(textField.value))
+    if (cabinets[i].name == textField.value)
       inc = true;
   if (inc)
     //the function that passes the div.textContent and textField.value to python to build a route
