@@ -171,9 +171,14 @@ router.addEventListener("click", (event) => {
     if (cabinets[i].name == textField.value)
       inc = true;
   if (inc)
-    //the function that passes the div.textContent and textField.value to python to build a route
-    //pass the result string to drawRoute
+  {
+    fetch(`/yourNodeEndpoint?str1=${encodeURIComponent(div.textContent)}&str2=${encodeURIComponent(textField.value)}`)
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error("Error:", error));
+
     drawRoute("cab404 > hallway1f4 > hallway2f4 > cab444");
+  }
   else
     alert("Такой аудитории не существует");
 });
