@@ -17,6 +17,8 @@ const loader = new GLTFLoader();
 const controls = new OrbitControls(camera, renderer.domElement);
 const cabinets = [];
 const hallways = [];
+const div = document.getElementById("data");
+const texto = document.getElementById("name");
 
 function loadFloor(model) {
   loader.load(
@@ -130,12 +132,9 @@ function addListeners() {
         updateOutline(cabinets[i], i);
         console.log(cabinets[i].name);
 
-        const div = document.getElementById("data");
         if (div.style.display === "none") 
           div.style.display = "block";
-        //pass info about the selected cabinet into div
-        console.log("dud");
-        
+        texto.textContent = cabinets[i].name;
       }
     });
 
@@ -161,6 +160,43 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
   interactionManager.update();
+}
+
+//build route button
+const router = document.getElementById("route");
+const textField = document.getElementById("input");
+router.addEventListener("click", (event) => {
+  let inc = false;
+  for (let i = 0; i < cabinets.length; i++)
+    if (cabinets[i].name.includes(textField.value))
+      inc = true;
+  if (inc)
+    //the function that passes the div.textContent and textField.value to python to build a route
+    //pass the result string to drawRoute
+    drawRoute("cab404 > hallway1f4 > hallway2f4 > cab444");
+  else
+    alert("Такой аудитории не существует");
+});
+
+function drawRoute(routeString)
+{
+  const pointsT = routeString.split(" > ");
+  const points = [];
+  console.log(pointsT);
+  for (let i = 0; i < pointsT.length; i++)
+  {
+    for (let j = 0; j < cabinets.length; j++)
+      if (cabinets[j].name == pointsT[i])
+        points[i] = new Three.Vector3(cabinets[j].position.x, cabinets[j].position.y + 3, cabinets[j].position.z);
+    for (let j = 0; j < hallways.length; j++)
+      if (hallways[j].name == pointsT[i])
+        points[i] = new Three.Vector3(hallways[j].position.x, hallways[j].position.y + 3, hallways[j].position.z);
+  }
+  console.log(points);
+  const geom = new Three.BufferGeometry().setFromPoints(points);
+  const lineColor = new Three.LineBasicMaterial({ color: 0xff0000 });
+  const line = new Three.Line(geom, lineColor);
+  scene.add(line);
 }
 
 animate();
