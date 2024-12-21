@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="{{ url_for('static', filename='images/MAI_Logo.png') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Карта МАИ</title>
+  </head>
+  <body>
+    <div id="data" style="display: none;">
+      <div>
+        <input id="input"/>
+        <button id="route">Построить маршрут</button>
+      </div>
+      <h1 id="name">name</h1>
+      <p>Информация о типах аудиторий будет в полной версии</p>
+      <p>Информация о типах досок будет в полной версии</p>
+    </div>
+    <div id="app">
+      
+    </div>
+
+    <!-- <canvas></canvas> -->
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js')}}"></script>
+  </body>
+</html>
