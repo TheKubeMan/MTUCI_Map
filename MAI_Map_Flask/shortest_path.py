@@ -9,6 +9,9 @@ def process_data(str1, str2):
     ft_cab = str1
     sd_cab = str2
 
+    ft_cab = ft_cab[3:]
+    sd_cab = sd_cab[3:]
+
     #Текущая лестница
     stair = str()
 
@@ -301,11 +304,4 @@ def process_data(str1, str2):
             allpath += " > " + hallway + " > cab" + final_sd_cab
 
     return allpath
-
-if __name__ == "__main__":
-
-    str1 = sys.argv[1]
-    str2 = sys.argv[2]
-    output = process_data(str1, str2)
-    print(json.dumps(output))
     
