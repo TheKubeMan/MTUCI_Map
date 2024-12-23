@@ -266,47 +266,6 @@ router.addEventListener("click", (event) => {
   });
   if (inc)
   {
-    // fetch(`/yourNodeEndpoint?str1=${encodeURIComponent(div.textContent)}&str2=${encodeURIComponent(textField.value)}`)
-    // .then(response => response.json())
-    // .then(data => console.log(data))
-    // .catch(error => console.error("Error:", error));
-  
-    // async function sendStringsToPython(str1, str2) {
-    // const response = await fetch('/process_strings', {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({ str1: str1, str2: str2 })
-    // });
-
-    // if (!response.ok) {
-    //     const errorData = await response.json();
-    //     console.error("Error:", errorData.error);
-    //     return null;
-    // }
-
-    // const data = await response.json();
-    // return data.result;
-    // }
-
-    // async function main() {
-
-    // // pythonProcess.stdin.write(JSON.stringify({ element1: texto.textContent, element2: textField.value }));
-    // // pythonProcess.stdin.end();
-
-    // // pythonProcess.stdout.on('data', (data) => {
-    // //   drawRoute(data.toString());
-    // // });
-
-    // const combinedString = await sendStringsToPython(string1, string2);
-    // if (combinedString !== null) {
-    //     console.log("Combined string from Python:", combinedString);
-    //   }
-    // }
-
-    // main();
-
     const data = {
       element1: texto.textContent,
       element2: textField.value
@@ -320,15 +279,13 @@ router.addEventListener("click", (event) => {
       body: JSON.stringify(data)
     })
     .then(response => response.text())
-    .then(data => {   
-      drawRoute(data);
+    .then(data => { 
+      pointsT = data.split(" > ");  
+      drawRoute();
     })
     .catch(error => {
       console.error('Ошибка:', error);
     });
-
-    pointsT = "cab404 > cab404Entry > hallway1f4 > hallway2f4 > cab502 > cab504".split(" > ");
-    drawRoute();
   }
   else
     alert("Такой аудитории не существует");
