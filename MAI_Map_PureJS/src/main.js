@@ -4,12 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InteractionManager } from 'three.interactive';
 
-const sceneF4 = new Three.Scene();
-const sceneF5 = new Three.Scene();
-const sceneF6 = new Three.Scene();
-const sceneF7 = new Three.Scene();
-let activeScene;
-
+const scene = new Three.Scene();
 const camera = new Three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new Three.WebGLRenderer({ alpha: true });
 const interactionManager = new InteractionManager(
@@ -20,26 +15,34 @@ const interactionManager = new InteractionManager(
 
 const loader = new GLTFLoader();
 const controls = new OrbitControls(camera, renderer.domElement);
-const cabinets = [];
-const hallways = [];
+const outlines = [];
+let sel = [];
+const ogSize = [];
+let currentModel;
+let cabinets = [];
+let hallways = [];
 const div = document.getElementById("data");
 const texto = document.getElementById("name");
 
-function loadFloor(model, scene) {
+function loadFloor(model) {
   loader.load(
     model,
     function (gltf) {
-      scene.add(gltf.scene);
-      gltf.scene.traverse(function (object) {
+      //cleanup function
+      currentModel = gltf.scene;
+      scene.add(currentModel);
+      currentModel.traverse(function (object) {
         if (!object.name.includes("001") && !object.name.includes("002") && !object.name.includes("toilet")
-          && !object.name.includes("Cube") && !object.name.includes("Scene") && !object.name.includes("Entry")) {
+          && !object.name.includes("Cube") && !object.name.includes("Scene") 
+          && !object.name.includes("Entry") && !object.name.includes("Cross")) {
           if (object.name.includes("hallway"))
             hallways.push(object);
           else
             cabinets.push(object);
         }
       });
-      addListeners(scene);
+      cleanup();
+      addListeners();
     },
     function (xhr) {
       console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -51,13 +54,22 @@ function loadFloor(model, scene) {
   animate();
 };
 
-loadFloor("../models/floor4.gltf", sceneF4);
-loadFloor("../models/floor5.gltf", sceneF5);
-loadFloor("../models/floor6.gltf", sceneF6);
-loadFloor("../models/floor7.gltf", sceneF7);
+function cleanup() {
+  if (currentModel)
+  {
+    //clean the interaction manager's eventListeners
+    scene.remove(currentModel);
+    for (let i =0; i < outlines.length; i++)
+      scene.remove(outlines[i]);
+    console.log("Removing scene");
+  }
+  else
+    console.log("No scene to remove");
+};
+
+loadFloor("../models/floor4.gltf");
 
 renderer.setPixelRatio(window.devicePixelRatio);
-console.log(window.innerHeight, window.innerWidth);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.setZ(30);
 
@@ -66,14 +78,8 @@ const topLight = new Three.DirectionalLight(0xFFFFFF, 1);
 topLight.position.set(500, 500, 500);
 topLight.castShadow = true;
 const ambientLight = new Three.AmbientLight(0xFFFFFF, 5);
-sceneF4.add(topLight);
-sceneF4.add(ambientLight);
-sceneF5.add(topLight);
-sceneF5.add(ambientLight);
-sceneF6.add(topLight);
-sceneF6.add(ambientLight);
-sceneF7.add(topLight);
-sceneF7.add(ambientLight);
+scene.add(topLight);
+scene.add(ambientLight);
 
 //materials
 const lect = new Three.MeshBasicMaterial({ color: 0x505cfa });
@@ -83,10 +89,7 @@ const hallway = new Three.MeshBasicMaterial({ color: 0xa490fa });
 const lineMaterial = new Three.LineBasicMaterial({ color: 0x000000, linewidth: 3 }); // Customize color and linewidth
 
 
-function addListeners(scene) {
-  const outlines = [];
-  let sel = [];
-  const ogSize = [];
+function addListeners() {
 
   function getTransformedGeometry(mesh) {
     const geometry = mesh.geometry.clone();
@@ -169,7 +172,7 @@ function animate() {
   requestAnimationFrame(animate);
 
   controls.update();
-  renderer.render(activeScene, camera);
+  renderer.render(scene, camera);
   interactionManager.update();
 }
 
@@ -210,7 +213,7 @@ function drawRoute(routeString)
   const geom = new Three.BufferGeometry().setFromPoints(points);
   const lineColor = new Three.LineBasicMaterial({ color: 0xff0000 });
   const line = new Three.Line(geom, lineColor);
-  activeScene.add(line);
+  scene.add(line);
 }
 
 animate();
