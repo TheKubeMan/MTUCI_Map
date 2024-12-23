@@ -281,6 +281,7 @@ router.addEventListener("click", (event) => {
     .then(response => response.text())
     .then(data => { 
       pointsT = data.split(" > ");  
+      console.log(data);
       drawRoute();
     })
     .catch(error => {
