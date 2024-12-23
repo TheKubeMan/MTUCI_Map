@@ -3,6 +3,7 @@ import * as Three from "three";
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InteractionManager } from 'three.interactive';
+import { PostProcessingUtils } from 'three/webgpu';
 
 //init stuff
 const scene = new Three.Scene();
@@ -24,6 +25,8 @@ const ogSize = [];
 let currentModel;
 let cabinets = [];
 let hallways = [];
+let f4, f5, f6, f7;
+let pointsT;
 
 //html elements
 const div = document.getElementById("data");
@@ -34,6 +37,12 @@ const f6b = document.getElementById("f6");
 const f7b = document.getElementById("f7");
 const router = document.getElementById("route");
 const textField = document.getElementById("input");
+
+//storing every scene inside a variable to later check if the cabinet exists
+loader.load("../models/floor4.gltf", function (gltf) { f4 = gltf.scene; });
+loader.load("../models/floor5.gltf", function (gltf) { f5 = gltf.scene; });
+loader.load("../models/floor6.gltf", function (gltf) { f6 = gltf.scene; });
+loader.load("../models/floor7.gltf", function (gltf) { f7 = gltf.scene; });
 
 function loadFloor(model) {
   loader.load(
@@ -55,6 +64,9 @@ function loadFloor(model) {
               cabinets.push(object);
           }
         });
+        if (pointsT)
+          // console.log(pointsT);
+          drawRoute();
         addListeners();
       }
     },
@@ -81,7 +93,7 @@ function cleanup() {
     scene.remove(currentModel);
     const outlinesToRemove = [];
     scene.traverse(function (object) {
-      if (object.name.includes("outline")) {
+      if (object.name.includes("outline") || object.name.includes("route")) {
         outlinesToRemove.push(object);
       }
     });
@@ -239,9 +251,22 @@ function animate() {
 //build route button
 router.addEventListener("click", (event) => {
   let inc = false;
-  for (let i = 0; i < cabinets.length; i++)
-    if (cabinets[i].name == textField.value)
+  f4.traverse(function (object) {
+    if (object.name == textField.value)
       inc = true;
+  });
+  f5.traverse(function (object) {
+    if (object.name == textField.value)
+      inc = true;
+  });
+  f6.traverse(function (object) {
+    if (object.name == textField.value)
+      inc = true;
+  });
+  f7.traverse(function (object) {
+    if (object.name == textField.value)
+      inc = true;
+  });
   if (inc)
   {
     // fetch(`/yourNodeEndpoint?str1=${encodeURIComponent(div.textContent)}&str2=${encodeURIComponent(textField.value)}`)
@@ -249,26 +274,27 @@ router.addEventListener("click", (event) => {
     // .then(data => console.log(data))
     // .catch(error => console.error("Error:", error));
 
-    drawRoute("cab404 > cab404Entry > hallway1f4 > hallway2f4 > cab444");
+    pointsT = "cab404 > cab404Entry > hallway1f4 > hallway2f4 > cab502 > cab504".split(" > ");
+    drawRoute();
   }
   else
     alert("Такой аудитории не существует");
 });
 
-function drawRoute(routeString)
+function drawRoute()
 {
-  const pointsT = routeString.split(" > ");
   const points = [];
   for (let i = 0; i < pointsT.length; i++)
   {
     currentModel.traverse(function (object) {
       if (object.name == pointsT[i])
-        points[i] = new Three.Vector3(object.position.x, object.position.y + 3, object.position.z);
+        points.push(new Three.Vector3(object.position.x, object.position.y + 3, object.position.z));
     });
   }
   const geom = new Three.BufferGeometry().setFromPoints(points);
   const lineColor = new Three.LineBasicMaterial({ color: 0xff0000 });
   const line = new Three.Line(geom, lineColor);
+  line.name = "route";
   scene.add(line);
 }
 
