@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InteractionManager } from 'three.interactive';
 
+//init stuff
 const scene = new Three.Scene();
 const camera = new Three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new Three.WebGLRenderer({ alpha: true });
@@ -12,9 +13,10 @@ const interactionManager = new InteractionManager(
   camera,
   renderer.domElement
 );
-
 const loader = new GLTFLoader();
 const controls = new OrbitControls(camera, renderer.domElement);
+
+//variables for rendering and routing
 const outlines = [];
 let canUpdateOutlines = true;
 let sel = [];
@@ -22,27 +24,39 @@ const ogSize = [];
 let currentModel;
 let cabinets = [];
 let hallways = [];
+
+//html elements
 const div = document.getElementById("data");
 const texto = document.getElementById("name");
+const f4b = document.getElementById("f4");
+const f5b = document.getElementById("f5");
+const f6b = document.getElementById("f6");
+const f7b = document.getElementById("f7");
+const router = document.getElementById("route");
+const textField = document.getElementById("input");
 
 function loadFloor(model) {
   loader.load(
     model,
     function (gltf) {
-      cleanup();
-      currentModel = gltf.scene;
-      scene.add(currentModel);
-      currentModel.traverse(function (object) {
-        if (!object.name.includes("001") && !object.name.includes("002") && !object.name.includes("toilet")
-          && !object.name.includes("Cube") && !object.name.includes("Scene") 
-          && !object.name.includes("Entry") && !object.name.includes("Cross")) {
-          if (object.name.includes("hallway"))
-            hallways.push(object);
-          else
-            cabinets.push(object);
-        }
-      });
-      addListeners();
+      if (currentModel != gltf.scene)
+      {
+        cleanup();
+        currentModel = gltf.scene;
+        canUpdateOutlines = true;
+        scene.add(currentModel);
+        currentModel.traverse(function (object) {
+          if (!object.name.includes("001") && !object.name.includes("002") && !object.name.includes("toilet")
+            && !object.name.includes("Cube") && !object.name.includes("Scene") 
+            && !object.name.includes("Entry") && !object.name.includes("Cross")) {
+            if (object.name.includes("hallway"))
+              hallways.push(object);
+            else
+              cabinets.push(object);
+          }
+        });
+        addListeners();
+      }
     },
     function (xhr) {
       console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -57,9 +71,32 @@ function loadFloor(model) {
 function cleanup() {
   if (currentModel)
   {
-    //clean the interaction manager's eventListeners
     canUpdateOutlines = false;
+    for (let i = cabinets.length - 1; i >= 0; i--) {
+      const object = cabinets[i];
+      if (object) {
+        interactionManager.remove(object);
+      }
+    }
     scene.remove(currentModel);
+    const outlinesToRemove = [];
+    scene.traverse(function (object) {
+      if (object.name.includes("outline")) {
+        outlinesToRemove.push(object);
+      }
+    });
+    for (let i = outlinesToRemove.length - 1; i >= 0; i--) {
+      scene.remove(outlinesToRemove[i]);
+    }
+    currentModel.traverse(function (object) {
+      if (object.geometry) object.geometry.dispose();
+      if (object.material){ 
+        if (object.material.map) 
+          object.material.map.dispose();
+        object.material.dispose();
+      }
+      if (object.texture) object.texture.dispose();
+    });
     hallways = [];
     cabinets = [];
     console.log("Removing scene...");
@@ -68,10 +105,11 @@ function cleanup() {
     console.log("No scene to remove");
 };
 
-loadFloor("../models/floor4.gltf");
 
+//render init stuff
+loadFloor("../models/floor4.gltf");
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(1500, 800);
 camera.position.setZ(30);
 
 //lights
@@ -89,6 +127,19 @@ const selected = new Three.MeshBasicMaterial({ color: 0xfa7f4c });
 const hallway = new Three.MeshBasicMaterial({ color: 0xa490fa });
 const lineMaterial = new Three.LineBasicMaterial({ color: 0x000000, linewidth: 3 }); // Customize color and linewidth
 
+//floor change on button click
+f4b.addEventListener("click", (event) => {
+  loadFloor("../models/floor4.gltf");
+});
+f5b.addEventListener("click", (event) => {
+  loadFloor("../models/floor5.gltf");
+});
+f6b.addEventListener("click", (event) => {
+  loadFloor("../models/floor6.gltf");
+});
+f7b.addEventListener("click", (event) => {
+  loadFloor("../models/floor7.gltf");
+});
 
 function addListeners() {
 
@@ -108,6 +159,7 @@ function addListeners() {
       const transformedGeometry = getTransformedGeometry(cabinet);
       const edges = new Three.EdgesGeometry(transformedGeometry);
       outlines[index] = new Three.LineSegments(edges, lineMaterial);
+      outlines[index].name = "outline" + index;
       scene.add(outlines[index]);
       renderer.render(scene, camera);
     }
@@ -122,6 +174,7 @@ function addListeners() {
       const transformedGeometry = getTransformedGeometry(hallways[i]);
       const edges = new Three.EdgesGeometry(transformedGeometry);
       const outline = new Three.LineSegments(edges, lineMaterial);
+      outline.name = "outlineH" + i;
       scene.add(outline);
       renderer.render(scene, camera);
     }
@@ -134,8 +187,7 @@ function addListeners() {
     ogSize[i] = cabinets[i].scale.clone();
     sel[i] = false;
     updateOutline(cabinets[i], i);
-    if(canUpdateOutlines)
-      interactionManager.add(cabinets[i]);
+    interactionManager.add(cabinets[i]);
 
     cabinets[i].addEventListener('click', (event) => {
       if (!sel[i]) {
@@ -185,8 +237,6 @@ function animate() {
 }
 
 //build route button
-const router = document.getElementById("route");
-const textField = document.getElementById("input");
 router.addEventListener("click", (event) => {
   let inc = false;
   for (let i = 0; i < cabinets.length; i++)
@@ -199,7 +249,7 @@ router.addEventListener("click", (event) => {
     // .then(data => console.log(data))
     // .catch(error => console.error("Error:", error));
 
-    drawRoute("cab404 > hallway1f4 > hallway2f4 > cab444");
+    drawRoute("cab404 > cab404Entry > hallway1f4 > hallway2f4 > cab444");
   }
   else
     alert("Такой аудитории не существует");
@@ -211,12 +261,10 @@ function drawRoute(routeString)
   const points = [];
   for (let i = 0; i < pointsT.length; i++)
   {
-    for (let j = 0; j < cabinets.length; j++)
-      if (cabinets[j].name == pointsT[i])
-        points[i] = new Three.Vector3(cabinets[j].position.x, cabinets[j].position.y + 3, cabinets[j].position.z);
-    for (let j = 0; j < hallways.length; j++)
-      if (hallways[j].name == pointsT[i])
-        points[i] = new Three.Vector3(hallways[j].position.x, hallways[j].position.y + 3, hallways[j].position.z);
+    currentModel.traverse(function (object) {
+      if (object.name == pointsT[i])
+        points[i] = new Three.Vector3(object.position.x, object.position.y + 3, object.position.z);
+    });
   }
   const geom = new Three.BufferGeometry().setFromPoints(points);
   const lineColor = new Three.LineBasicMaterial({ color: 0xff0000 });
