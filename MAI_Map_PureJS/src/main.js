@@ -16,6 +16,7 @@ const interactionManager = new InteractionManager(
 const loader = new GLTFLoader();
 const controls = new OrbitControls(camera, renderer.domElement);
 const outlines = [];
+let canUpdateOutlines = true;
 let sel = [];
 const ogSize = [];
 let currentModel;
@@ -28,7 +29,7 @@ function loadFloor(model) {
   loader.load(
     model,
     function (gltf) {
-      //cleanup function
+      cleanup();
       currentModel = gltf.scene;
       scene.add(currentModel);
       currentModel.traverse(function (object) {
@@ -41,7 +42,6 @@ function loadFloor(model) {
             cabinets.push(object);
         }
       });
-      cleanup();
       addListeners();
     },
     function (xhr) {
@@ -58,10 +58,11 @@ function cleanup() {
   if (currentModel)
   {
     //clean the interaction manager's eventListeners
+    canUpdateOutlines = false;
     scene.remove(currentModel);
-    for (let i =0; i < outlines.length; i++)
-      scene.remove(outlines[i]);
-    console.log("Removing scene");
+    hallways = [];
+    cabinets = [];
+    console.log("Removing scene...");
   }
   else
     console.log("No scene to remove");
@@ -98,26 +99,32 @@ function addListeners() {
   }
 
   function updateOutline(cabinet, index) {
-    // Check if an outline already exists
-    if (outlines[index]) {
-      scene.remove(outlines[index]);
+    if (canUpdateOutlines)
+    {
+      // Check if an outline already exists
+      if (outlines[index]) {
+        scene.remove(outlines[index]);
+      }
+      const transformedGeometry = getTransformedGeometry(cabinet);
+      const edges = new Three.EdgesGeometry(transformedGeometry);
+      outlines[index] = new Three.LineSegments(edges, lineMaterial);
+      scene.add(outlines[index]);
+      renderer.render(scene, camera);
     }
-    const transformedGeometry = getTransformedGeometry(cabinet);
-    const edges = new Three.EdgesGeometry(transformedGeometry);
-    outlines[index] = new Three.LineSegments(edges, lineMaterial);
-    scene.add(outlines[index]);
-    renderer.render(scene, camera);
   }
 
   //hallways
   for (let i = 0; i < hallways.length; i++)
   {
-    hallways[i].material = hallway;
-    const transformedGeometry = getTransformedGeometry(hallways[i]);
-    const edges = new Three.EdgesGeometry(transformedGeometry);
-    const outline = new Three.LineSegments(edges, lineMaterial);
-    scene.add(outline);
-    renderer.render(scene, camera);
+    if (canUpdateOutlines)
+    {
+      hallways[i].material = hallway;
+      const transformedGeometry = getTransformedGeometry(hallways[i]);
+      const edges = new Three.EdgesGeometry(transformedGeometry);
+      const outline = new Three.LineSegments(edges, lineMaterial);
+      scene.add(outline);
+      renderer.render(scene, camera);
+    }
   }
 
   //cabinets
@@ -127,7 +134,8 @@ function addListeners() {
     ogSize[i] = cabinets[i].scale.clone();
     sel[i] = false;
     updateOutline(cabinets[i], i);
-    interactionManager.add(cabinets[i]);
+    if(canUpdateOutlines)
+      interactionManager.add(cabinets[i]);
 
     cabinets[i].addEventListener('click', (event) => {
       if (!sel[i]) {
