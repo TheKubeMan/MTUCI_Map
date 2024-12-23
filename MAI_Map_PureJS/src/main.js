@@ -3,7 +3,6 @@ import * as Three from "three";
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InteractionManager } from 'three.interactive';
-import { PostProcessingUtils } from 'three/webgpu';
 
 //init stuff
 const scene = new Three.Scene();
@@ -65,7 +64,6 @@ function loadFloor(model) {
           }
         });
         if (pointsT)
-          // console.log(pointsT);
           drawRoute();
         addListeners();
       }
@@ -116,7 +114,6 @@ function cleanup() {
   else
     console.log("No scene to remove");
 };
-
 
 //render init stuff
 loadFloor("../models/floor4.gltf");
