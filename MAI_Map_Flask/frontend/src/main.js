@@ -294,6 +294,10 @@ router.addEventListener("click", (event) => {
 
 function drawRoute()
 {
+  scene.traverse(function (object) {
+    if (object.name == "route")
+      scene.remove(object);
+  })
   const points = [];
   for (let i = 0; i < pointsT.length; i++)
   {
